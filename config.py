@@ -1,7 +1,10 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv(".env.local")
+_env_file = Path(".env.local")
+if _env_file.exists():
+    load_dotenv(_env_file)
 
 DB_PATH = os.getenv("DB_PATH", "walk.db")
 COOKIE_SECRET = os.getenv("COOKIE_SECRET", "dev-secret-change-in-prod")
