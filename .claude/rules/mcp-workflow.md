@@ -1,0 +1,1 @@
+/home/john/.claude/rules/mcp-workflow.md

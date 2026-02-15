@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block subtitle %}{{ current.route_origin_address }} &rarr; New York City{% endblock %}
+
+{% block content %}
+<div class="split-screen">
+    {# ── Current user panel (left) ───────────────────────────── #}
+    <div class="panel">
+        <div class="card">
+            <h2>{{ current.name }}</h2>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">{{ "%.1f"|format(current.total_miles) }}</div>
+                    <div class="stat-label">Total Miles</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ current.percent_complete }}%</div>
+                    <div class="stat-label">Complete</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ current.days_active }}</div>
+                    <div class="stat-label">Days Active</div>
+                </div>
+            </div>
+
+            <div class="progress-bar-container">
+                <div class="progress-bar" style="width: {{ [current.percent_complete, 100]|min }}%">
+                    {{ current.percent_complete }}%
+                </div>
+            </div>
+
+            {% if status_message %}
+            <div class="status-message {{ status_class }}">{{ status_message }}</div>
+            {% endif %}
+
+            {# Waypoint milestones #}
+            {% if current_waypoints %}
+            <div class="milestone-track">
+                {% for wp in current_waypoints %}
+                <div class="milestone {{ 'passed' if wp.passed }}"
+                     style="left: {{ (wp.mile_marker / current.route_total_miles * 100)|round(1) }}%">
+                    <div class="milestone-dot"></div>
+                    <div class="milestone-label">{{ wp.name.split(',')[0] }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        {# ── Gap-fill or daily entry form ────────────────────── #}
+        {% if gap_days %}
+        <div class="card">
+            <h2>Fill Missing Days</h2>
+            <div class="gap-fill-notice">
+                <p>You have <strong>{{ gap_days|length }}</strong> day{{ 's' if gap_days|length > 1 else '' }} without entries. Fill them in before logging today.</p>
+            </div>
+
+            <form method="post" action="/log">
+                <div class="form-group">
+                    <label for="date">{{ gap_days[0] }}</label>
+                    <input type="hidden" name="date" value="{{ gap_days[0] }}">
+                    <input type="number" name="miles" step="0.1" min="0" placeholder="Miles (0 if rest day)" required>
+                </div>
+                <button type="submit" class="btn-full">Log {{ gap_days[0] }}</button>
+            </form>
+
+            {% if gap_days|length > 1 %}
+            <form method="post" action="/log-zeros" class="mt-2">
+                <button type="submit" class="btn-full btn-small" style="background: var(--color-text-secondary);">Fill all {{ gap_days|length }} days with 0</button>
+            </form>
+            {% endif %}
+        </div>
+
+        {% else %}
+        <div class="card">
+            <h2>Log Miles</h2>
+            <form method="post" action="/log">
+                <div class="form-group">
+                    <label for="date">Date</label>
+                    <input type="date" id="date" name="date" required>
+                </div>
+                <div class="form-group">
+                    <label for="miles">Miles</label>
+                    <input type="number" id="miles" name="miles" step="0.1" min="0" placeholder="3.5" required>
+                </div>
+                <button type="submit" class="btn-full">Log Miles</button>
+            </form>
+        </div>
+        {% endif %}
+
+        {# ── Recent entries ──────────────────────────────────── #}
+        {% if recent_entries %}
+        <div class="card">
+            <h2>Recent Entries</h2>
+            <div class="entry-list">
+                {% for entry in recent_entries %}
+                <div class="entry-item">
+                    <div>
+                        <span class="entry-date">{{ entry.date }}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="entry-miles">{{ "%.1f"|format(entry.miles) }} mi</span>
+                        {% if entry.editable %}
+                        <form method="post" action="/edit/{{ entry.id }}" style="display: flex; gap: 4px; align-items: center;">
+                            <input type="number" name="new_miles" step="0.1" min="0"
+                                   value="{{ "%.1f"|format(entry.miles) }}"
+                                   style="width: 70px; padding: 4px 6px; font-size: 0.85rem;">
+                            <button type="submit" class="btn-small">Fix</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {# ── Friend panel (right) ────────────────────────────────── #}
+    {% if friend %}
+    <div class="panel friend-panel">
+        <div class="card">
+            <h2>{{ friend.name }}</h2>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">{{ "%.1f"|format(friend.total_miles) }}</div>
+                    <div class="stat-label">Total Miles</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ friend.percent_complete }}%</div>
+                    <div class="stat-label">Complete</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ friend.days_active }}</div>
+                    <div class="stat-label">Days Active</div>
+                </div>
+            </div>
+
+            <div class="progress-bar-container">
+                <div class="progress-bar" style="width: {{ [friend.percent_complete, 100]|min }}%">
+                    {{ friend.percent_complete }}%
+                </div>
+            </div>
+
+            {% if friend_waypoints %}
+            <div class="milestone-track">
+                {% for wp in friend_waypoints %}
+                <div class="milestone {{ 'passed' if wp.passed }}"
+                     style="left: {{ (wp.mile_marker / friend.route_total_miles * 100)|round(1) }}%">
+                    <div class="milestone-dot"></div>
+                    <div class="milestone-label">{{ wp.name.split(',')[0] }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        {% if not friend.route_total_miles %}
+        <div class="card text-center">
+            <p class="text-muted">{{ friend.name }} hasn't set up their route yet.</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Default date picker to today
+    const dateInput = document.getElementById('date');
+    if (dateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+        dateInput.max = today;
+    }
+</script>
+{% endblock %}

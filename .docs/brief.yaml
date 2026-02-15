@@ -1,0 +1,127 @@
+project: walk-to-nyc
+
+spark: >
+  Sara (Columbus, OH) and Mariah (Asheville, NC) are walking/biking to NYC
+  before their 9/30/26 departure. They want a shared tracker that holds them
+  accountable through visibility — you can't open the app without seeing
+  whether your friend put in the work.
+
+essence: >
+  A shared accountability mirror. Two friends, two routes, one deadline.
+  The split-screen isn't a layout choice — it's the core mechanic.
+  Secondary purpose: the builder's first full-rigor project (data platform
+  first, containers, deploy, clean teardown) — training exercise wrapped
+  in a real app for real people.
+
+done:
+  - Two users can log daily combined miles (walk + bike, same weight) via magic token auth
+  - Split-screen on desktop/tablet — logged-in user left (with entry), friend right (view-only)
+  - Mobile view shows only logged-in user's panel with quick daily entry
+  - Gap-fill prompts for missed days between last entry and today (enter miles or zero)
+  - Typo correction allowed on entries within the last 7 days
+  - One-time initial seed entry for pre-app miles
+  - Decorative waypoint milestones along each user's route (Columbus→NYC, Asheville→NYC)
+  - Admin token for builder — light-touch access for tweaks or bumps
+  - Final report per user at end of life (total miles, days active, streaks, waypoints passed)
+  - Deployed to fly.io behind walk.haugaard.app (Cloudflare DNS, gray cloud)
+  - Clean teardown leaves no trace on fly.io; SQLite archived before destroy
+
+architecture:
+  type: traditional
+  rationale: >
+    Pure procedure — log a number, display a number, compare two numbers.
+    No judgment calls, no natural language, no learning. An agent would be
+    overkill for what is essentially a fancy spreadsheet with a nice face.
+
+  platform: fly.io single machine
+  database: SQLite (single file, trivial to archive)
+  auth: >
+    Magic token. Three tokens generated at deploy (Sara, Mariah, admin).
+    Token = identity. No usernames, passwords, or emails. Tokens live for
+    the app's entire lifespan. Shared out-of-band (text the link).
+    Admin can regenerate a user's token if compromised.
+  frontend: >
+    Server-rendered with minimal JS. No SPA framework. Split-screen layout
+    via CSS. Responsive: two-panel on desktop/tablet, single-panel on mobile.
+    A little panache via /frontend-design skill when the time comes.
+  containers: yes — local dev and deploy via containers
+  domain: walk.haugaard.app (Cloudflare DNS, gray cloud — points to fly.io)
+  lifespan: defined — launch through 9/30/2026 departure, then teardown
+
+  key_contracts:
+    - boundary: token-to-user
+      contract: >
+        Present token → get user context. No token = no access.
+        Three tokens total. Token is the sole identity mechanism.
+        Admin token grants admin context. If token leaks, admin
+        regenerates — old token dies immediately.
+    - boundary: daily-entry
+      contract: >
+        One entry per user per day, date-stamped. Zero is a valid entry
+        (means "I didn't walk"). Entries editable within 7-day window,
+        locked after. Gap-fill enforced: must resolve all missing days
+        before logging today.
+    - boundary: teardown
+      contract: >
+        Archive = dump SQLite file + generate final reports + store on
+        durable storage. Then fly apps destroy. No orphaned resources.
+
+data_signals:
+  entities:
+    - user (id, name, token_hash, route_origin, total_seed_miles, emoji_descriptor)
+    - daily_entry (id, user_id, date, miles, created_at, updated_at)
+    - waypoint (id, route, name, mile_marker, order)
+  operations:
+    - log daily miles (with gap-fill flow)
+    - edit recent entry (within 7-day window)
+    - view own progress (miles, waypoints passed, streak)
+    - view friend's progress (read-only)
+    - admin: regenerate token, view both users
+    - generate final report
+  consumers:
+    - sara (mobile + desktop)
+    - mariah (mobile + desktop)
+    - admin (desktop, infrequent)
+  sensitivity: low — first names and daily mile counts only, no PII
+
+agent_architecture:
+  decision: none
+  rationale: >
+    This app is pure procedure with deterministic flows. No natural language
+    processing, no judgment calls, no adaptive behavior needed. Traditional
+    request-response architecture is the correct and simplest choice.
+
+boundaries:
+  in_scope:
+    - Daily mile logging with gap-fill
+    - Split-screen accountability view
+    - Decorative waypoint milestones
+    - Magic token auth (lifespan tokens)
+    - Initial seed entry
+    - Typo correction (7-day window)
+    - Final report generation
+    - Fly.io deploy with clean teardown
+    - Archive before destroy
+  out_of_scope:
+    - Social features (nudges, comments, reactions)
+    - Walk vs. bike differentiation
+    - Route accuracy or GPS
+    - Public-facing anything
+    - Post-trip persistence
+
+execution:
+  next_skill: data-platforming
+  priorities:
+    - Data platform first (schema design via /data-platforming)
+    - Backend + auth second
+    - Frontend third (apply /frontend-design for panache)
+    - Deploy and domain config fourth
+    - Teardown/archive procedure documented last
+  notes:
+    - Builder's first full-rigor project — treat process as a learning goal
+    - Waypoint cities to be curated during frontend phase (real cities, fun picks)
+    - Final report scope is lightweight — generated from existing daily_entry data
+    - Keep stack simple — this is a 7-month app for 3 people
+
+open_questions: []
+  # Resolved: Archive SQLite + final reports to VPS at teardown

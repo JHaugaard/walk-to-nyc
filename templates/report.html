@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block subtitle %}Final Report — {{ walker_name }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>{{ walker_name }}'s Journey</h2>
+    <p class="text-muted mb-2">{{ origin }} &rarr; New York City, NY</p>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.1f"|format(report.total_miles) }}</div>
+            <div class="stat-label">Total Miles</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ report.percent_complete }}%</div>
+            <div class="stat-label">Complete</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ report.days_active }}</div>
+            <div class="stat-label">Days Active</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ report.total_entry_days }}</div>
+            <div class="stat-label">Total Entries</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ report.longest_streak }}</div>
+            <div class="stat-label">Longest Streak</div>
+        </div>
+    </div>
+
+    {% if report.first_entry_date %}
+    <p class="text-muted mb-1" style="font-size: 0.9rem;">
+        First entry: {{ report.first_entry_date }} &nbsp;|&nbsp; Last entry: {{ report.last_entry_date }}
+    </p>
+    {% endif %}
+</div>
+
+{% if report.waypoints_passed %}
+<div class="card">
+    <h2>Waypoints Reached</h2>
+    {% for wp in report.waypoints_passed %}
+    <div class="entry-item">
+        <span class="entry-date">{{ wp.name }}</span>
+        <span class="entry-miles">{{ "%.1f"|format(wp.mile_marker) }} mi</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="text-center mt-2">
+    <a href="/admin" class="btn btn-small">&larr; Back to Admin</a>
+</div>
+{% endblock %}

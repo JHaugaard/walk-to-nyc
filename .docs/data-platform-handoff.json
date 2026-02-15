@@ -1,0 +1,400 @@
+{
+  "project": {
+    "name": "walk-to-nyc",
+    "description": "Shared walking/biking accountability tracker for two friends preparing for a NYC trip",
+    "platform": "sqlite",
+    "namespace": null,
+    "namespace_note": "SQLite uses a single file — the file IS the project boundary. No schema namespace needed."
+  },
+  "schema": {
+    "tables": [
+      {
+        "name": "user",
+        "columns": [
+          {
+            "name": "id",
+            "type": "INTEGER",
+            "nullable": false,
+            "default": "autoincrement",
+            "constraints": ["PRIMARY KEY"]
+          },
+          {
+            "name": "name",
+            "type": "TEXT",
+            "nullable": false,
+            "default": null,
+            "constraints": []
+          },
+          {
+            "name": "role",
+            "type": "TEXT",
+            "nullable": false,
+            "default": null,
+            "constraints": ["CHECK (role IN ('walker', 'admin'))"]
+          },
+          {
+            "name": "token_hash",
+            "type": "TEXT",
+            "nullable": false,
+            "default": null,
+            "constraints": ["UNIQUE"]
+          },
+          {
+            "name": "route_origin_address",
+            "type": "TEXT",
+            "nullable": true,
+            "default": null,
+            "constraints": []
+          },
+          {
+            "name": "route_dest_address",
+            "type": "TEXT",
+            "nullable": true,
+            "default": null,
+            "constraints": []
+          },
+          {
+            "name": "route_total_miles",
+            "type": "REAL",
+            "nullable": true,
+            "default": null,
+            "constraints": ["CHECK (route_total_miles > 0)"]
+          },
+          {
+            "name": "seed_miles",
+            "type": "REAL",
+            "nullable": false,
+            "default": 0,
+            "constraints": ["CHECK (seed_miles >= 0)"]
+          },
+          {
+            "name": "emoji_descriptor",
+            "type": "TEXT",
+            "nullable": true,
+            "default": null,
+            "constraints": []
+          },
+          {
+            "name": "setup_complete",
+            "type": "INTEGER",
+            "nullable": false,
+            "default": 0,
+            "constraints": ["CHECK (setup_complete IN (0, 1))"]
+          },
+          {
+            "name": "created_at",
+            "type": "TEXT",
+            "nullable": false,
+            "default": "(datetime('now'))",
+            "constraints": []
+          }
+        ],
+        "primaryKey": "id",
+        "foreignKeys": [],
+        "indexes": []
+      },
+      {
+        "name": "daily_entry",
+        "columns": [
+          {
+            "name": "id",
+            "type": "INTEGER",
+            "nullable": false,
+            "default": "autoincrement",
+            "constraints": ["PRIMARY KEY"]
+          },
+          {
+            "name": "user_id",
+            "type": "INTEGER",
+            "nullable": false,
+            "default": null,
+            "constraints": []
+          },
+          {
+            "name": "date",
+            "type": "TEXT",
+            "nullable": false,
+            "default": null,
+            "constraints": []
+          },
+          {
+            "name": "miles",
+            "type": "REAL",
+            "nullable": false,
+            "default": null,
+            "constraints": ["CHECK (miles >= 0)"]
+          },
+          {
+            "name": "created_at",
+            "type": "TEXT",
+            "nullable": false,
+            "default": "(datetime('now'))",
+            "constraints": []
+          },
+          {
+            "name": "updated_at",
+            "type": "TEXT",
+            "nullable": false,
+            "default": "(datetime('now'))",
+            "constraints": []
+          }
+        ],
+        "primaryKey": "id",
+        "foreignKeys": [
+          {
+            "column": "user_id",
+            "references": { "table": "user", "column": "id" },
+            "onDelete": "CASCADE"
+          }
+        ],
+        "indexes": [
+          {
+            "columns": ["user_id", "date"],
+            "unique": true,
+            "name": "idx_daily_entry_user_date"
+          }
+        ]
+      },
+      {
+        "name": "waypoint",
+        "columns": [
+          {
+            "name": "id",
+            "type": "INTEGER",
+            "nullable": false,
+            "default": "autoincrement",
+            "constraints": ["PRIMARY KEY"]
+          },
+          {
+            "name": "user_id",
+            "type": "INTEGER",
+            "nullable": false,
+            "default": null,
+            "constraints": []
+          },
+          {
+            "name": "name",
+            "type": "TEXT",
+            "nullable": false,
+            "default": null,
+            "constraints": []
+          },
+          {
+            "name": "mile_marker",
+            "type": "REAL",
+            "nullable": false,
+            "default": null,
+            "constraints": ["CHECK (mile_marker > 0)"]
+          },
+          {
+            "name": "display_order",
+            "type": "INTEGER",
+            "nullable": false,
+            "default": null,
+            "constraints": []
+          },
+          {
+            "name": "selected",
+            "type": "INTEGER",
+            "nullable": false,
+            "default": 1,
+            "constraints": ["CHECK (selected IN (0, 1))"]
+          }
+        ],
+        "primaryKey": "id",
+        "foreignKeys": [
+          {
+            "column": "user_id",
+            "references": { "table": "user", "column": "id" },
+            "onDelete": "CASCADE"
+          }
+        ],
+        "indexes": [
+          {
+            "columns": ["user_id", "selected"],
+            "unique": false,
+            "name": "idx_waypoint_user_selected"
+          }
+        ]
+      }
+    ]
+  },
+  "operations": {
+    "views": [
+      {
+        "name": "user_progress",
+        "purpose": "Main dashboard query — everything needed to render one user's panel",
+        "query": "SELECT u.id AS user_id, u.name, u.emoji_descriptor, u.route_origin_address, u.route_total_miles, u.seed_miles, COALESCE(SUM(de.miles), 0) AS logged_miles, u.seed_miles + COALESCE(SUM(de.miles), 0) AS total_miles, CASE WHEN u.route_total_miles > 0 THEN ROUND((u.seed_miles + COALESCE(SUM(de.miles), 0)) / u.route_total_miles * 100, 1) ELSE 0 END AS percent_complete, COALESCE(COUNT(CASE WHEN de.miles > 0 THEN 1 END), 0) AS days_active, MAX(de.date) AS last_entry_date FROM user u LEFT JOIN daily_entry de ON u.id = de.user_id WHERE u.role = 'walker' GROUP BY u.id"
+      },
+      {
+        "name": "waypoints_passed",
+        "purpose": "Which waypoints has a user reached, based on total miles",
+        "query": "SELECT w.user_id, w.name, w.mile_marker, w.display_order, CASE WHEN (u.seed_miles + COALESCE(logged.total, 0)) >= w.mile_marker THEN 1 ELSE 0 END AS passed FROM waypoint w JOIN user u ON w.user_id = u.id LEFT JOIN (SELECT user_id, SUM(miles) AS total FROM daily_entry GROUP BY user_id) logged ON w.user_id = logged.user_id WHERE w.selected = 1 ORDER BY w.user_id, w.display_order"
+      },
+      {
+        "name": "recent_entries",
+        "purpose": "Entries within the 7-day edit window for typo correction",
+        "query": "SELECT id, user_id, date, miles, CASE WHEN date >= date('now', '-7 days') THEN 1 ELSE 0 END AS editable FROM daily_entry ORDER BY date DESC"
+      }
+    ],
+    "functions": [
+      {
+        "name": "log_miles",
+        "purpose": "Record miles for a specific date (core write operation)",
+        "parameters": [
+          { "name": "user_id", "type": "INTEGER" },
+          { "name": "date", "type": "TEXT (ISO-8601)" },
+          { "name": "miles", "type": "REAL" }
+        ],
+        "returns": "daily_entry row",
+        "behavior": "Validate: user exists, role=walker, setup_complete=1, date not future, miles >= 0, no existing entry for that date. INSERT into daily_entry.",
+        "access": ["walker (own)", "admin"]
+      },
+      {
+        "name": "edit_entry",
+        "purpose": "Correct a typo on a recent entry (7-day window)",
+        "parameters": [
+          { "name": "entry_id", "type": "INTEGER" },
+          { "name": "new_miles", "type": "REAL" }
+        ],
+        "returns": "updated daily_entry row",
+        "behavior": "Validate: entry exists, belongs to requesting user, date within 7 days of today, new_miles >= 0. UPDATE miles and updated_at.",
+        "access": ["walker (own)", "admin"]
+      },
+      {
+        "name": "complete_setup",
+        "purpose": "One-time route setup after maps API call",
+        "parameters": [
+          { "name": "user_id", "type": "INTEGER" },
+          { "name": "origin_address", "type": "TEXT" },
+          { "name": "dest_address", "type": "TEXT" },
+          { "name": "route_total_miles", "type": "REAL" },
+          { "name": "seed_miles", "type": "REAL" },
+          { "name": "waypoints", "type": "ARRAY of {name, mile_marker, display_order, selected}" }
+        ],
+        "returns": "void",
+        "behavior": "Validate: user exists, setup_complete=0. UPDATE user with route fields, seed_miles, setup_complete=1. INSERT all waypoints. Atomic transaction.",
+        "access": ["walker (own)"]
+      },
+      {
+        "name": "regenerate_token",
+        "purpose": "Admin kills old token and issues new one",
+        "parameters": [
+          { "name": "target_user_id", "type": "INTEGER" }
+        ],
+        "returns": "new raw token (displayed once)",
+        "behavior": "Validate: requesting user is admin. Generate new random token, hash it, UPDATE user.token_hash. Return raw token.",
+        "access": ["admin"]
+      },
+      {
+        "name": "get_gap_days",
+        "purpose": "Return list of dates needing gap-fill entries",
+        "parameters": [
+          { "name": "user_id", "type": "INTEGER" }
+        ],
+        "returns": "ARRAY of TEXT (ISO-8601 dates)",
+        "behavior": "Find MAX(date) from daily_entry for user. Return all dates from day-after-last-entry through yesterday. Empty array if no gaps.",
+        "access": ["walker (own)"]
+      },
+      {
+        "name": "generate_final_report",
+        "purpose": "End-of-life report per walker",
+        "parameters": [
+          { "name": "user_id", "type": "INTEGER" }
+        ],
+        "returns": "Report object: total_miles, percent_complete, days_active, total_entry_days, longest_streak, waypoints_passed (list), first_entry_date, last_entry_date",
+        "behavior": "Query user_progress view + all daily_entries ordered by date. Compute longest consecutive streak (days with miles > 0). List waypoints where total_miles >= mile_marker.",
+        "access": ["admin"]
+      }
+    ]
+  },
+  "security": {
+    "model": "application-layer",
+    "note": "SQLite has no RLS or database roles. All access control enforced in app middleware.",
+    "authentication": {
+      "method": "magic_token",
+      "flow": "Token in URL param on first visit → validated → long-lived cookie set (expires Oct 2026) → return visits use cookie",
+      "token_spec": "32 bytes cryptographically random, URL-safe base64 encoded",
+      "storage": "Only token_hash stored in database. Raw token exists only in user's link and cookie.",
+      "regeneration": "Admin generates new token → old hash overwritten → old link/cookie instantly invalid"
+    },
+    "authorization": {
+      "rules": [
+        {
+          "role": "walker",
+          "can_read": "Own progress + friend's progress (read-only) + own recent entries",
+          "can_write": "Own daily entries (log + edit within 7 days) + own setup",
+          "restrictions": "Must complete setup before logging. Cannot access admin functions."
+        },
+        {
+          "role": "admin",
+          "can_read": "All data for both walkers",
+          "can_write": "Regenerate tokens. Manual data fixes if needed.",
+          "restrictions": "Cannot log miles or run setup flow. No data entry footprint."
+        }
+      ]
+    },
+    "transport": "HTTPS enforced via Cloudflare + fly.io. Tokens never travel in plaintext."
+  },
+  "agentReadiness": {
+    "decision": "none",
+    "rationale": "Pure traditional architecture. 3 human consumers, deterministic flows, no agent interaction needed."
+  },
+  "rationale": [
+    {
+      "decision": "Platform selection",
+      "chosen": "SQLite",
+      "why": "3 users, 3 tables, zero real-time needs, defined lifespan. Single file = simplest archive story. No separate DB service needed. Embedded in the app container.",
+      "alternatives": ["Supabase — overkill for 3 users, adds namespace overhead for a 7-month app", "PocketBase — good fit but abstracts away the auth and API work that serves the learning goal"]
+    },
+    {
+      "decision": "Auth approach",
+      "chosen": "Magic token with long-lived cookie",
+      "why": "3 known users, low sensitivity data, defined lifespan. Tokens live for the app's life. Cookie set on first visit avoids repeated link lookups. Simplest auth that works.",
+      "alternatives": ["PocketBase/Supabase built-in auth — heavier than needed for 3 static users", "Username/password — unnecessary complexity, more to forget/break"]
+    },
+    {
+      "decision": "Waypoint storage",
+      "chosen": "Store all API candidates with selected flag",
+      "why": "Avoids re-calling the maps API if a user wants to change their waypoint selections later. Selected flag filters at query time.",
+      "alternatives": ["Store only selected waypoints — simpler but requires new API call to change selections"]
+    },
+    {
+      "decision": "Seed miles storage",
+      "chosen": "Field on user table, not a daily_entry row",
+      "why": "Seed miles aren't tied to a date. Keeping them separate avoids a fake 'day zero' entry that would skew streak calculations and day counts.",
+      "alternatives": ["Special daily_entry with a sentinel date — pollutes the entries table, complicates queries"]
+    },
+    {
+      "decision": "Security model",
+      "chosen": "Application-layer enforcement",
+      "why": "SQLite has no RLS or database roles. With 3 users and app-layer middleware, this is the natural and only approach. Threat model is minimal — worst case is fake mile logging.",
+      "alternatives": ["Move to Postgres/Supabase for RLS — unnecessary infrastructure for the threat model"]
+    },
+    {
+      "decision": "Agent architecture",
+      "chosen": "None",
+      "why": "Pure procedure — log a number, display a number, compare two numbers. No judgment, no NLP, no adaptive behavior. Traditional request-response is correct.",
+      "alternatives": ["Any agent involvement — would add complexity with zero value for deterministic CRUD flows"]
+    }
+  ],
+  "seedData": {
+    "users": [
+      { "name": "Sara", "role": "walker", "emoji_descriptor": "short blonde hair" },
+      { "name": "Mariah", "role": "walker", "emoji_descriptor": "chin-length brown hair" },
+      { "name": "Admin", "role": "admin", "emoji_descriptor": null }
+    ],
+    "note": "Tokens generated at deploy time. Waypoints populated per-user during setup flow via maps API."
+  },
+  "lifecycle": {
+    "deploy": "Fly.io single machine, walk.haugaard.app via Cloudflare DNS (gray cloud)",
+    "lifespan": "Launch through 9/30/2026",
+    "teardown": [
+      "Copy SQLite file to VPS",
+      "Generate final reports for each walker",
+      "Save final reports to VPS alongside database",
+      "fly apps destroy",
+      "Remove Cloudflare DNS record"
+    ]
+  }
+}

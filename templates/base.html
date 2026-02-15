@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title | default("Walk to NYC") }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Walk to NYC</h1>
+            <p class="subtitle">{% block subtitle %}Two friends, two routes, one deadline{% endblock %}</p>
+        </header>
+
+        {% if flash_message %}
+        <div class="status-message status-ahead">{{ flash_message }}</div>
+        {% endif %}
+
+        {% if flash_error %}
+        <div class="status-message status-behind">{{ flash_error }}</div>
+        {% endif %}
+
+        {% block content %}
+        {% if content %}
+        <div class="card text-center">
+            <p>{{ content }}</p>
+        </div>
+        {% endif %}
+        {% endblock %}
+    </div>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

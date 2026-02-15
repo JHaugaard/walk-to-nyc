@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block subtitle %}Admin Panel{% endblock %}
+
+{% block content %}
+
+{% if new_token %}
+<div class="card">
+    <h2>New Token Generated</h2>
+    <p class="mb-1">New token for <strong>{{ token_for }}</strong>:</p>
+    <div class="token-display">{{ new_token }}</div>
+    <p class="text-muted" style="font-size: 0.85rem;">Copy this now. It will not be shown again. The old token is now invalid.</p>
+</div>
+{% endif %}
+
+{% for walker in walkers %}
+<div class="card">
+    <h2>{{ walker.name }}</h2>
+
+    {% if walker.route_total_miles %}
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ "%.1f"|format(walker.total_miles) }}</div>
+            <div class="stat-label">Total Miles</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ walker.percent_complete }}%</div>
+            <div class="stat-label">Complete</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ walker.days_active }}</div>
+            <div class="stat-label">Days Active</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ walker.last_entry_date or "—" }}</div>
+            <div class="stat-label">Last Entry</div>
+        </div>
+    </div>
+
+    <div class="progress-bar-container">
+        <div class="progress-bar" style="width: {{ [walker.percent_complete, 100]|min }}%">
+            {{ walker.percent_complete }}%
+        </div>
+    </div>
+    {% else %}
+    <p class="text-muted mb-2">Setup not complete.</p>
+    {% endif %}
+
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <form method="post" action="/admin/regenerate/{{ walker.user_id }}"
+              onsubmit="return confirm('Regenerate token for {{ walker.name }}? The old link will stop working immediately.')">
+            <button type="submit" class="btn-danger btn-small">Regenerate Token</button>
+        </form>
+
+        <a href="/admin/report/{{ walker.user_id }}" class="btn btn-small">View Report</a>
+    </div>
+</div>
+{% endfor %}
+
+{% if not walkers %}
+<div class="card text-center">
+    <p class="text-muted">No walkers found.</p>
+</div>
+{% endif %}
+
+{% endblock %}

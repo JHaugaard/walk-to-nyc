@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Walk Challenge: Columbus to NYC</title>
+    <style>
+        :root {
+            --color-bg-primary: #fcfcf9;
+            --color-bg-secondary: #fffffe;
+            --color-text-primary: #13343b;
+            --color-text-secondary: #626c71;
+            --color-accent: #218d8d;
+            --color-accent-hover: #1d747c;
+            --color-success: #218d8d;
+            --color-border: rgba(94, 82, 64, 0.2);
+            --color-surface: #fffffe;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-bg-primary: #1f2121;
+                --color-bg-secondary: #262828;
+                --color-text-primary: #f5f5f5;
+                --color-text-secondary: #a7a9a9;
+                --color-accent: #32b8c6;
+                --color-accent-hover: #2da6b2;
+                --color-success: #32b8c6;
+                --color-border: rgba(119, 124, 124, 0.3);
+                --color-surface: #262828;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: var(--color-text-primary);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--color-text-secondary);
+        }
+
+        .card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .progress-section {
+            margin-bottom: 32px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--color-accent);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .progress-bar-container {
+            background: var(--color-bg-primary);
+            border-radius: 12px;
+            height: 40px;
+            overflow: hidden;
+            margin: 24px 0;
+            border: 1px solid var(--color-border);
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-accent), var(--color-accent-hover));
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 12px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .milestone-track {
+            position: relative;
+            height: 80px;
+            margin: 24px 0;
+            background: linear-gradient(to right, var(--color-bg-primary) 0%, var(--color-bg-secondary) 100%);
+            border-radius: 8px;
+            border: 1px solid var(--color-border);
+        }
+
+        .milestone {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .milestone-dot {
+            width: 16px;
+            height: 16px;
+            background: var(--color-accent);
+            border-radius: 50%;
+            margin: 0 auto 4px;
+            border: 3px solid var(--color-surface);
+        }
+
+        .milestone-label {
+            font-size: 0.75rem;
+            color: var(--color-text-secondary);
+            white-space: nowrap;
+        }
+
+        .milestone.completed .milestone-dot {
+            background: var(--color-success);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus {
+            outline: 2px solid var(--color-accent);
+            border-color: var(--color-accent);
+        }
+
+        button {
+            background: var(--color-accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            background: var(--color-accent-hover);
+        }
+
+        .walks-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .walk-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .walk-entry:last-child {
+            border-bottom: none;
+        }
+
+        .walk-date {
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+
+        .walk-distance {
+            color: var(--color-accent);
+            font-weight: 600;
+        }
+
+        .walk-notes {
+            color: var(--color-text-secondary);
+            font-size: 0.875rem;
+            margin-top: 4px;
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 16px 0;
+            font-weight: 500;
+        }
+
+        .status-ahead {
+            background: rgba(33, 141, 141, 0.1);
+            color: var(--color-success);
+            border: 1px solid var(--color-success);
+        }
+
+        .status-ontrack {
+            background: rgba(33, 141, 141, 0.1);
+            color: var(--color-success);
+            border: 1px solid var(--color-success);
+        }
+
+        .status-behind {
+            background: rgba(255, 84, 89, 0.1);
+            color: #c0152f;
+            border: 1px solid #c0152f;
+        }
+
+        .delete-btn {
+            background: #c0152f;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            margin-left: 12px;
+        }
+
+        .delete-btn:hover {
+            background: #a01229;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚶‍♂️ Virtual Walk Challenge</h1>
+            <p class="subtitle">Columbus, OH → New York City, NY</p>
+        </header>
+
+        <div class="card progress-section">
+            <h2 style="margin-bottom: 20px;">Your Progress</h2>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalMiles">0</div>
+                    <div class="stat-label">Miles Walked</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="percentComplete">0%</div>
+                    <div class="stat-label">Complete</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="daysRemaining">-</div>
+                    <div class="stat-label">Days Remaining</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avgPace">0</div>
+                    <div class="stat-label">Avg Miles/Day</div>
+                </div>
+            </div>
+
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar">0%</div>
+            </div>
+
+            <div class="milestone-track" id="milestoneTrack"></div>
+
+            <div id="statusMessage"></div>
+        </div>
+
+        <div class="card">
+            <h2 style="margin-bottom: 20px;">Log a Walk</h2>
+            <form id="walkForm">
+                <div class="form-group">
+                    <label for="walkDate">Date</label>
+                    <input type="date" id="walkDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="walkDistance">Distance (miles)</label>
+                    <input type="number" id="walkDistance" step="0.1" min="0.1" placeholder="3.5" required>
+                </div>
+                <div class="form-group">
+                    <label for="walkNotes">Notes (optional)</label>
+                    <textarea id="walkNotes" rows="2" placeholder="Beautiful morning walk in the park..."></textarea>
+                </div>
+                <button type="submit">Add Walk</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2 style="margin-bottom: 20px;">Recent Walks</h2>
+            <div class="walks-list" id="walksList">
+                <p style="text-align: center; color: var(--color-text-secondary);">No walks logged yet. Start your journey!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GOAL_MILES = 567;
+        const START_DATE = new Date('2026-02-14');
+        const END_DATE = new Date('2026-08-14');
+        
+        const MILESTONES = [
+            { name: 'Columbus', miles: 0 },
+            { name: 'Pittsburgh', miles: 185 },
+            { name: 'Harrisburg', miles: 370 },
+            { name: 'Philadelphia', miles: 465 },
+            { name: 'New York City', miles: 567 }
+        ];
+
+        let walks = JSON.parse(localStorage.getItem('walks') || '[]');
+
+        function saveToDB() {
+            localStorage.setItem('walks', JSON.stringify(walks));
+        }
+
+        function calculateStats() {
+            const totalMiles = walks.reduce((sum, walk) => sum + parseFloat(walk.distance), 0);
+            const percentComplete = Math.min((totalMiles / GOAL_MILES * 100), 100);
+            const today = new Date();
+            const daysElapsed = Math.max(1, Math.ceil((today - START_DATE) / (1000 * 60 * 60 * 24)));
+            const daysRemaining = Math.ceil((END_DATE - today) / (1000 * 60 * 60 * 24));
+            const avgPace = totalMiles / daysElapsed;
+            const neededPace = Math.max(0, (GOAL_MILES - totalMiles) / Math.max(1, daysRemaining));
+            
+            return {
+                totalMiles: totalMiles.toFixed(1),
+                percentComplete: percentComplete.toFixed(1),
+                daysRemaining,
+                avgPace: avgPace.toFixed(2),
+                neededPace: neededPace.toFixed(2)
+            };
+        }
+
+        function renderStats() {
+            const stats = calculateStats();
+            
+            document.getElementById('totalMiles').textContent = stats.totalMiles;
+            document.getElementById('percentComplete').textContent = stats.percentComplete + '%';
+            document.getElementById('daysRemaining').textContent = stats.daysRemaining;
+            document.getElementById('avgPace').textContent = stats.avgPace;
+            
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = stats.percentComplete + '%';
+            progressBar.textContent = stats.percentComplete + '%';
+            
+            renderMilestones(parseFloat(stats.totalMiles));
+            renderStatusMessage(stats);
+        }
+
+        function renderMilestones(currentMiles) {
+            const track = document.getElementById('milestoneTrack');
+            track.innerHTML = '';
+            
+            MILESTONES.forEach(milestone => {
+                const position = (milestone.miles / GOAL_MILES) * 100;
+                const isCompleted = currentMiles >= milestone.miles;
+                
+                const div = document.createElement('div');
+                div.className = `milestone ${isCompleted ? 'completed' : ''}`;
+                div.style.left = position + '%';
+                div.innerHTML = `
+                    <div class="milestone-dot"></div>
+                    <div class="milestone-label">${milestone.name}</div>
+                `;
+                track.appendChild(div);
+            });
+        }
+
+        function renderStatusMessage(stats) {
+            const container = document.getElementById('statusMessage');
+            const currentMiles = parseFloat(stats.totalMiles);
+            const neededPace = parseFloat(stats.neededPace);
+            const avgPace = parseFloat(stats.avgPace);
+            
+            let message = '';
+            let statusClass = '';
+            
+            if (currentMiles >= GOAL_MILES) {
+                message = '🎉 Congratulations! You\'ve completed your virtual walk to NYC!';
+                statusClass = 'status-ahead';
+            } else if (avgPace >= neededPace) {
+                message = `🔥 You're on track! Keep up the great work. Average ${stats.avgPace} mi/day.`;
+                statusClass = 'status-ahead';
+            } else {
+                message = `💪 Let's pick up the pace! Need ${stats.neededPace} mi/day to reach NYC on time.`;
+                statusClass = 'status-behind';
+            }
+            
+            container.innerHTML = `<div class="status-message ${statusClass}">${message}</div>`;
+        }
+
+        function renderWalks() {
+            const container = document.getElementById('walksList');
+            
+            if (walks.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--color-text-secondary);">No walks logged yet. Start your journey!</p>';
+                return;
+            }
+            
+            const sortedWalks = [...walks].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            container.innerHTML = sortedWalks.map((walk, index) => `
+                <div class="walk-entry">
+                    <div>
+                        <div class="walk-date">${new Date(walk.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                        ${walk.notes ? `<div class="walk-notes">${walk.notes}</div>` : ''}
+                    </div>
+                    <div style="display: flex; align-items: center;">
+                        <div class="walk-distance">${walk.distance} mi</div>
+                        <button class="delete-btn" onclick="deleteWalk(${index})">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteWalk(index) {
+            if (confirm('Delete this walk entry?')) {
+                const sortedWalks = [...walks].sort((a, b) => new Date(b.date) - new Date(a.date));
+                const walkToDelete = sortedWalks[index];
+                const originalIndex = walks.findIndex(w => 
+                    w.date === walkToDelete.date && 
+                    w.distance === walkToDelete.distance && 
+                    w.notes === walkToDelete.notes
+                );
+                
+                walks.splice(originalIndex, 1);
+                saveToDB();
+                renderStats();
+                renderWalks();
+            }
+        }
+
+        document.getElementById('walkForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const walk = {
+                date: document.getElementById('walkDate').value,
+                distance: parseFloat(document.getElementById('walkDistance').value),
+                notes: document.getElementById('walkNotes').value
+            };
+            
+            walks.push(walk);
+            saveToDB();
+            
+            document.getElementById('walkForm').reset();
+            document.getElementById('walkDate').valueAsDate = new Date();
+            
+            renderStats();
+            renderWalks();
+        });
+
+        document.getElementById('walkDate').valueAsDate = new Date();
+        renderStats();
+        renderWalks();
+    </script>
+</body>
+</html>
+

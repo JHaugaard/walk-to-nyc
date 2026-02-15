@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.db
+*.db-shm
+*.db-wal
+.env.local
+.git/
+.claude/
+.docs/
+*.md
+virtual-walk-challenge.html

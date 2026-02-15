@@ -1,0 +1,42 @@
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.sublime-*
+
+# Dependencies
+node_modules/
+vendor/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# Build Output
+dist/
+build/
+out/
+*.egg-info/
+
+# Logs & Temp Files
+*.log
+logs/
+tmp/
+temp/
+.cache/
