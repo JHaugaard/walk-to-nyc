@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block subtitle %}{{ current.route_origin_address }} &rarr; New York City{% endblock %}
+{% block subtitle %}Destination: Madison Square Garden{% endblock %}
 
 {% block content %}
 <div class="split-screen">
@@ -17,10 +17,6 @@
                 <div class="stat-card">
                     <div class="stat-value">{{ current.percent_complete }}%</div>
                     <div class="stat-label">Complete</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">{{ current.days_active }}</div>
-                    <div class="stat-label">Days Active</div>
                 </div>
             </div>
 
@@ -131,10 +127,6 @@
                 <div class="stat-card">
                     <div class="stat-value">{{ friend.percent_complete }}%</div>
                     <div class="stat-label">Complete</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">{{ friend.days_active }}</div>
-                    <div class="stat-label">Days Active</div>
                 </div>
             </div>
 
