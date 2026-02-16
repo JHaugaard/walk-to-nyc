@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS user (
     seed_miles REAL NOT NULL DEFAULT 0 CHECK (seed_miles >= 0),
     emoji_descriptor TEXT,
     setup_complete INTEGER NOT NULL DEFAULT 0 CHECK (setup_complete IN (0, 1)),
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at TEXT NOT NULL DEFAULT (datetime('now', '-5 hours'))
 );
 
 CREATE TABLE IF NOT EXISTS daily_entry (
@@ -24,8 +24,8 @@ CREATE TABLE IF NOT EXISTS daily_entry (
     user_id INTEGER NOT NULL,
     date TEXT NOT NULL,
     miles REAL NOT NULL CHECK (miles >= 0),
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now', '-5 hours')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now', '-5 hours')),
     FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 );
 
@@ -94,7 +94,7 @@ SELECT
     date,
     miles,
     CASE
-        WHEN date >= date('now', '-7 days') THEN 1
+        WHEN date >= date('now', '-5 hours', '-7 days') THEN 1
         ELSE 0
     END AS editable
 FROM daily_entry

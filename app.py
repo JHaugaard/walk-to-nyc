@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI, Request, Depends, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -16,6 +17,13 @@ from auth import (
     require_setup_complete,
     require_admin,
 )
+
+EASTERN = ZoneInfo("America/New_York")
+
+
+def today_et() -> date:
+    """Return today's date in US Eastern time."""
+    return datetime.now(EASTERN).date()
 
 
 # ── Hardcoded waypoint candidates (dev) ─────────────────────────────
@@ -39,17 +47,17 @@ WAYPOINT_CANDIDATES = {
     },
     "Asheville": {
         "origin": "Asheville, NC",
-        "total_miles": 600.0,
+        "total_miles": 693.0,
         "candidates": [
-            {"name": "Winston-Salem, NC", "mile_marker": 80},
-            {"name": "Roanoke, VA", "mile_marker": 175},
-            {"name": "Staunton, VA", "mile_marker": 230},
-            {"name": "Richmond, VA", "mile_marker": 330},
-            {"name": "Washington, DC", "mile_marker": 430},
-            {"name": "Baltimore, MD", "mile_marker": 470},
-            {"name": "Wilmington, DE", "mile_marker": 520},
-            {"name": "Philadelphia, PA", "mile_marker": 540},
-            {"name": "New York City, NY", "mile_marker": 600},
+            {"name": "Winston-Salem, NC", "mile_marker": 92},
+            {"name": "Roanoke, VA", "mile_marker": 202},
+            {"name": "Staunton, VA", "mile_marker": 266},
+            {"name": "Richmond, VA", "mile_marker": 381},
+            {"name": "Washington, DC", "mile_marker": 497},
+            {"name": "Baltimore, MD", "mile_marker": 543},
+            {"name": "Wilmington, DE", "mile_marker": 601},
+            {"name": "Philadelphia, PA", "mile_marker": 624},
+            {"name": "New York City, NY", "mile_marker": 693},
         ],
     },
 }
@@ -136,7 +144,7 @@ def _get_gap_days(user_id: int) -> list[str]:
         return []
 
     last_date = date.fromisoformat(row["last_date"])
-    yesterday = date.today() - timedelta(days=1)
+    yesterday = today_et() - timedelta(days=1)
 
     if last_date >= yesterday:
         return []
@@ -180,7 +188,7 @@ def _render_dashboard(request: Request, user: dict, flash_error: str | None = No
 
     # Pace status message
     deadline = date(2026, 9, 30)
-    days_remaining = max(0, (deadline - date.today()).days)
+    days_remaining = max(0, (deadline - today_et()).days)
     status_message = None
     status_class = None
     if current and current["route_total_miles"]:
@@ -279,7 +287,7 @@ def log_miles(
     except ValueError:
         return _render_dashboard(request, user, flash_error="Invalid date.")
 
-    if entry_date > date.today():
+    if entry_date > today_et():
         return _render_dashboard(request, user, flash_error="Cannot log future dates.")
 
     if miles < 0:
@@ -351,12 +359,13 @@ def edit_entry(
             return _render_dashboard(request, user, flash_error="Entry not found.")
 
         entry_date = date.fromisoformat(entry["date"])
-        if entry_date < date.today() - timedelta(days=7):
+        if entry_date < today_et() - timedelta(days=7):
             return _render_dashboard(request, user, flash_error="Entry is older than 7 days and cannot be edited.")
 
+        now_et = datetime.now(EASTERN).strftime("%Y-%m-%d %H:%M:%S")
         db.execute(
-            "UPDATE daily_entry SET miles = ?, updated_at = datetime('now') WHERE id = ?",
-            (new_miles, entry_id),
+            "UPDATE daily_entry SET miles = ?, updated_at = ? WHERE id = ?",
+            (new_miles, now_et, entry_id),
         )
         db.commit()
     finally:

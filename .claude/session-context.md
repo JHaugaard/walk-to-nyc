@@ -1,7 +1,7 @@
 # Session Context
 
 ## Current Focus
-walk-to-nyc: UI polish pass + Leaflet route maps
+walk-to-nyc: Production refinements — timezone fix + route distance correction
 
 ## MCP Servers Added This Session
 | Server | Status |
@@ -20,6 +20,8 @@ walk-to-nyc: UI polish pass + Leaflet route maps
 9. config.py guards `.env.local` with existence check (file absent in Docker)
 10. Leaflet + OpenStreetMap for route maps — no API key, ~18 hardcoded lat/lng waypoints per route
 11. Custom inline SVGs for walker avatars (Sara: blonde spiky, Mariah: brown chin-length)
+12. All dates pinned to US Eastern (America/New_York) — `today_et()` helper, SQLite defaults use `-5 hours` offset, JS date picker uses `toLocaleString` with Eastern TZ
+13. Mariah's route distance corrected from 600 to 693 miles (Asheville NC → NYC); waypoint mile markers scaled proportionally
 
 ## Artifacts Produced
 - `app.py` — FastAPI app with 8 routes (dashboard, setup, log, edit, log-zeros, admin, regen, report)
@@ -44,9 +46,9 @@ walk-to-nyc: UI polish pass + Leaflet route maps
 - **DB reset**: `fly ssh console -C "rm /data/walk.db && python init_db.py"`
 
 ## What's Next
-- Test Mariah's setup flow (seed-miles-only) after DB reset
-- Refine SVG walker figures if needed after visual review
-- Consider dark mode testing for map tiles
+- **DB reset required** after deploy — Mariah's `route_total_miles` and waypoint `mile_marker` values in the DB still reflect the old 600-mile route. Run: `fly ssh console -C "rm /data/walk.db && python init_db.py"` then have both users re-setup.
+- Test Mariah's setup flow after DB reset to confirm 693 shows correctly
+- Consider DST-aware offset (currently hardcoded `-5 hours` in SQLite; Python side uses `zoneinfo` which handles DST automatically)
 
 ## Notes
 - Fly shared IPv4 requires both A and AAAA records for custom domains
@@ -54,7 +56,7 @@ walk-to-nyc: UI polish pass + Leaflet route maps
 - DB seeded with 3 users (Sara, Mariah, Admin) — tokens captured by user
 - Jinja2 format() on None causes 500 — guard nullable columns in templates
 - Mariah's existing DB has no setup_complete, so friend panel needs None guards
+- SQLite `datetime('now', '-5 hours')` is a fixed UTC-5 offset; does NOT auto-adjust for EDT (-4). The Python `today_et()` helper DOES handle DST correctly via `zoneinfo`.
 
 ## Session Status
-Completed: 2026-02-15
-Servers cleaned: none needed
+In progress

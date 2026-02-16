@@ -148,10 +148,15 @@
 
 {% block scripts %}
 <script>
-    // Default date picker to today
+    // Default date picker to today (US Eastern)
     const dateInput = document.getElementById('date');
     if (dateInput) {
-        const today = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const eastern = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+        const y = eastern.getFullYear();
+        const m = String(eastern.getMonth() + 1).padStart(2, '0');
+        const d = String(eastern.getDate()).padStart(2, '0');
+        const today = `${y}-${m}-${d}`;
         dateInput.value = today;
         dateInput.max = today;
     }
