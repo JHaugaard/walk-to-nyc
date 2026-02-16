@@ -7,7 +7,10 @@
     {# ── Current user panel (left) ───────────────────────────── #}
     <div class="panel">
         <div class="card">
-            <h2>{{ current.name }}</h2>
+            <div class="card-header-row">
+                <h2>{{ current.name }}</h2>
+                <span class="route-distance">{{ "%.0f"|format(current.route_total_miles) }} mi total</span>
+            </div>
 
             <div class="stats-grid">
                 <div class="stat-card">
@@ -106,7 +109,10 @@
     {% if friend %}
     <div class="panel friend-panel">
         <div class="card">
-            <h2>{{ friend.name }}</h2>
+            <div class="card-header-row">
+                <h2>{{ friend.name }}</h2>
+                <span class="route-distance">{{ "%.0f"|format(friend.route_total_miles) }} mi total</span>
+            </div>
 
             <div class="stats-grid">
                 <div class="stat-card">
@@ -272,16 +278,6 @@
             fillColor: '#e74c3c',
             fillOpacity: 1,
             weight: 2
-        }).addTo(map);
-
-        // Current position (pulsing dot)
-        L.circleMarker(currentPos, {
-            radius: 7,
-            color: '#fff',
-            fillColor: ACCENT,
-            fillOpacity: 1,
-            weight: 3,
-            className: 'pulse-marker'
         }).addTo(map);
 
         // Fit bounds to show the full route

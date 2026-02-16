@@ -73,9 +73,15 @@ h1 {
 }
 
 .header-emoji {
-    font-size: 1.6rem;
+    display: inline-block;
     vertical-align: middle;
-    margin: 0 4px;
+    margin: 0 6px;
+    line-height: 0;
+}
+
+.header-emoji svg {
+    display: inline-block;
+    vertical-align: middle;
 }
 
 .subtitle {
@@ -144,6 +150,24 @@ h1 {
     font-size: 1.15rem;
     font-weight: 600;
     letter-spacing: -0.2px;
+}
+
+.card-header-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.card-header-row h2 {
+    margin-bottom: 0;
+}
+
+.route-distance {
+    font-size: 0.78rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    letter-spacing: 0.3px;
 }
 
 /* ── Stats grid ─────────────────────────────────────────── */
@@ -230,16 +254,6 @@ h1 {
     height: 28px;
     line-height: 28px;
     font-size: 14px;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.7; transform: scale(1.4); }
-}
-
-.pulse-marker {
-    animation: pulse 2s ease-in-out infinite;
-    transform-origin: center;
 }
 
 /* ── Forms ──────────────────────────────────────────────── */
