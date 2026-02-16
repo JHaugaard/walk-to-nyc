@@ -30,18 +30,7 @@
             <div class="status-message {{ status_class }}">{{ status_message }}</div>
             {% endif %}
 
-            {# Waypoint milestones #}
-            {% if current_waypoints %}
-            <div class="milestone-track">
-                {% for wp in current_waypoints %}
-                <div class="milestone {{ 'passed' if wp.passed }}"
-                     style="left: {{ (wp.mile_marker / current.route_total_miles * 100)|round(1) }}%">
-                    <div class="milestone-dot"></div>
-                    <div class="milestone-label">{{ wp.name.split(',')[0] }}</div>
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
+            <div id="map-current" class="route-map"></div>
         </div>
 
         {# ── Gap-fill or daily entry form ────────────────────── #}
@@ -136,24 +125,8 @@
                 </div>
             </div>
 
-            {% if friend_waypoints %}
-            <div class="milestone-track">
-                {% for wp in friend_waypoints %}
-                <div class="milestone {{ 'passed' if wp.passed }}"
-                     style="left: {{ (wp.mile_marker / friend.route_total_miles * 100)|round(1) }}%">
-                    <div class="milestone-dot"></div>
-                    <div class="milestone-label">{{ wp.name.split(',')[0] }}</div>
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
+            <div id="map-friend" class="route-map"></div>
         </div>
-
-        {% if not friend.route_total_miles %}
-        <div class="card text-center">
-            <p class="text-muted">{{ friend.name }} hasn't set up their route yet.</p>
-        </div>
-        {% endif %}
     </div>
     {% endif %}
 </div>
@@ -168,5 +141,161 @@
         dateInput.value = today;
         dateInput.max = today;
     }
+
+    // ── Route map data ──────────────────────────────────────────
+    const ROUTES = {
+        "Sara": [
+            [39.953, -82.983], [39.969, -82.741], [40.038, -82.386],
+            [39.944, -81.734], [40.064, -80.721], [40.274, -80.218],
+            [40.441, -79.996], [40.367, -79.165], [40.386, -78.795],
+            [40.351, -78.392], [40.272, -77.879], [40.264, -76.884],
+            [40.336, -76.411], [40.420, -75.928], [40.603, -75.470],
+            [40.689, -75.213], [40.741, -74.694], [40.736, -74.172],
+            [40.750, -73.994]
+        ],
+        "Mariah": [
+            [35.595, -82.574], [35.747, -82.291], [36.095, -81.760],
+            [36.572, -81.178], [36.884, -80.774], [37.271, -80.414],
+            [37.770, -79.442], [38.034, -78.908], [38.450, -78.470],
+            [39.164, -78.177], [39.642, -77.720], [40.264, -76.884],
+            [40.420, -75.928], [40.603, -75.470], [40.689, -75.213],
+            [40.741, -74.694], [40.736, -74.172], [40.750, -73.994]
+        ]
+    };
+
+    const ACCENT = getComputedStyle(document.documentElement)
+        .getPropertyValue('--color-accent').trim();
+
+    function interpolatePoint(coords, fraction) {
+        if (fraction <= 0) return coords[0];
+        if (fraction >= 1) return coords[coords.length - 1];
+
+        // Compute cumulative segment distances
+        let totalDist = 0;
+        const segDists = [];
+        for (let i = 1; i < coords.length; i++) {
+            const dlat = coords[i][0] - coords[i-1][0];
+            const dlng = coords[i][1] - coords[i-1][1];
+            const d = Math.sqrt(dlat*dlat + dlng*dlng);
+            segDists.push(d);
+            totalDist += d;
+        }
+
+        let target = fraction * totalDist;
+        let cumul = 0;
+        for (let i = 0; i < segDists.length; i++) {
+            if (cumul + segDists[i] >= target) {
+                const segFrac = (target - cumul) / segDists[i];
+                return [
+                    coords[i][0] + segFrac * (coords[i+1][0] - coords[i][0]),
+                    coords[i][1] + segFrac * (coords[i+1][1] - coords[i][1])
+                ];
+            }
+            cumul += segDists[i];
+        }
+        return coords[coords.length - 1];
+    }
+
+    function initRouteMap(elementId, routeName, percentComplete) {
+        const coords = ROUTES[routeName];
+        if (!coords) return;
+
+        const fraction = Math.min(percentComplete / 100, 1);
+        const currentPos = interpolatePoint(coords, fraction);
+
+        // Find the split index for coloring
+        let splitIndex = 0;
+        let totalDist = 0;
+        const segDists = [];
+        for (let i = 1; i < coords.length; i++) {
+            const dlat = coords[i][0] - coords[i-1][0];
+            const dlng = coords[i][1] - coords[i-1][1];
+            segDists.push(Math.sqrt(dlat*dlat + dlng*dlng));
+            totalDist += segDists[segDists.length - 1];
+        }
+        let target = fraction * totalDist;
+        let cumul = 0;
+        for (let i = 0; i < segDists.length; i++) {
+            if (cumul + segDists[i] >= target) {
+                splitIndex = i;
+                break;
+            }
+            cumul += segDists[i];
+            splitIndex = i;
+        }
+
+        // Build completed + remaining coordinate arrays
+        const completedCoords = coords.slice(0, splitIndex + 1).concat([currentPos]);
+        const remainingCoords = [currentPos].concat(coords.slice(splitIndex + 1));
+
+        const map = L.map(elementId, {
+            zoomControl: true,
+            scrollWheelZoom: false,
+            dragging: true,
+            touchZoom: true,
+            doubleClickZoom: true,
+            attributionControl: false
+        });
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18
+        }).addTo(map);
+
+        // Completed portion (accent color)
+        L.polyline(completedCoords, {
+            color: ACCENT,
+            weight: 4,
+            opacity: 0.9
+        }).addTo(map);
+
+        // Remaining portion (gray)
+        L.polyline(remainingCoords, {
+            color: '#b0b8bc',
+            weight: 3,
+            opacity: 0.5,
+            dashArray: '8 6'
+        }).addTo(map);
+
+        // Origin marker
+        L.circleMarker(coords[0], {
+            radius: 5,
+            color: ACCENT,
+            fillColor: ACCENT,
+            fillOpacity: 1,
+            weight: 2
+        }).addTo(map);
+
+        // Destination marker
+        L.circleMarker(coords[coords.length - 1], {
+            radius: 5,
+            color: '#e74c3c',
+            fillColor: '#e74c3c',
+            fillOpacity: 1,
+            weight: 2
+        }).addTo(map);
+
+        // Current position (pulsing dot)
+        L.circleMarker(currentPos, {
+            radius: 7,
+            color: '#fff',
+            fillColor: ACCENT,
+            fillOpacity: 1,
+            weight: 3,
+            className: 'pulse-marker'
+        }).addTo(map);
+
+        // Fit bounds to show the full route
+        const bounds = L.latLngBounds(coords);
+        map.fitBounds(bounds, { padding: [15, 15] });
+    }
+
+    // Initialize maps
+    {% if current %}
+    initRouteMap('map-current', '{{ current.name }}', {{ current.percent_complete }});
+    {% endif %}
+
+    {% if friend %}
+    initRouteMap('map-friend', '{{ friend.name }}', {{ friend.percent_complete }});
+    {% endif %}
 </script>
 {% endblock %}

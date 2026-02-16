@@ -215,48 +215,28 @@ def _render_dashboard(request: Request, user: dict, flash_error: str | None = No
 def setup_page(request: Request, user: dict = Depends(require_walker)):
     if user["setup_complete"]:
         return RedirectResponse(url="/", status_code=303)
-    origin, total_miles, candidates = _get_candidates_for_user(user)
+    origin, total_miles, _ = _get_candidates_for_user(user)
     return templates.TemplateResponse("setup.html", {
         "request": request,
         "title": "Route Setup",
         "user": user,
         "default_origin": origin,
         "default_total_miles": total_miles,
-        "candidates": candidates,
     })
 
 
 @app.post("/setup")
-async def setup_submit(
+def setup_submit(
     request: Request,
     user: dict = Depends(require_walker),
-    origin: str = Form(...),
-    destination: str = Form(...),
-    total_miles: float = Form(...),
     seed_miles: float = Form(...),
 ):
     if user["setup_complete"]:
         return RedirectResponse(url="/", status_code=303)
 
-    # Parse selected waypoint indices from form checkboxes
-    form_data = await request.form()
-    selected_indices = [int(v) for v in form_data.getlist("waypoints")]
+    origin, total_miles, candidates = _get_candidates_for_user(user)
+    destination = "Madison Square Garden, New York, NY"
 
-    if len(selected_indices) != 6:
-        _, _, candidates = _get_candidates_for_user(user)
-        return templates.TemplateResponse("setup.html", {
-            "request": request,
-            "title": "Route Setup",
-            "user": user,
-            "default_origin": origin,
-            "default_total_miles": total_miles,
-            "candidates": candidates,
-            "flash_error": "Please select exactly 6 waypoints.",
-        })
-
-    _, _, candidates = _get_candidates_for_user(user)
-
-    # Atomic transaction: update user + insert waypoints
     db = get_db()
     try:
         db.execute("BEGIN")
@@ -267,13 +247,12 @@ async def setup_submit(
             WHERE id = ? AND setup_complete = 0""",
             (origin, destination, total_miles, seed_miles, user["id"]),
         )
+        # Still insert all waypoints for report page usage
         for i, wp in enumerate(candidates):
-            is_selected = i in selected_indices
             db.execute(
                 """INSERT INTO waypoint (user_id, name, mile_marker, display_order, selected)
-                VALUES (?, ?, ?, ?, ?)""",
-                (user["id"], wp["name"], wp["mile_marker"], wp["display_order"],
-                 1 if is_selected else 0),
+                VALUES (?, ?, ?, ?, 1)""",
+                (user["id"], wp["name"], wp["mile_marker"], wp["display_order"]),
             )
         db.commit()
     except Exception:

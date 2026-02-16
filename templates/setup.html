@@ -3,64 +3,33 @@
 {% block subtitle %}Route Setup for {{ user.name }}{% endblock %}
 
 {% block content %}
-<div class="card">
-    <h2>Set Up Your Route</h2>
-    <p class="text-muted mb-2">This is a one-time setup. Choose your starting point, total distance, and the waypoints you want to track along the way.</p>
+<div class="card" style="max-width: 480px; margin: 0 auto;">
+    <h2>Welcome, {{ user.name }}!</h2>
+    <p class="text-muted mb-2">Your route is ready to go. Just one thing before we start:</p>
 
-    <form method="post" action="/setup" id="setupForm">
-        <div class="form-group">
-            <label for="origin">Starting City</label>
-            <input type="text" id="origin" name="origin" value="{{ default_origin }}" required>
+    <div class="route-summary mb-2">
+        <div class="stat-card" style="text-align: left; padding: 16px;">
+            <div style="margin-bottom: 8px;">
+                <span class="stat-label">From</span>
+                <div style="font-weight: 600;">{{ default_origin }}</div>
+            </div>
+            <div style="margin-bottom: 8px;">
+                <span class="stat-label">To</span>
+                <div style="font-weight: 600;">Madison Square Garden, NYC</div>
+            </div>
+            <div>
+                <span class="stat-label">Distance</span>
+                <div style="font-weight: 600;">{{ default_total_miles }} miles</div>
+            </div>
         </div>
+    </div>
 
+    <form method="post" action="/setup">
         <div class="form-group">
-            <label for="destination">Destination</label>
-            <input type="text" id="destination" name="destination" value="New York City, NY" readonly>
+            <label for="seed_miles">Pre-app miles (miles already walked before today)</label>
+            <input type="number" id="seed_miles" name="seed_miles" step="0.1" min="0" value="0" placeholder="0" required>
         </div>
-
-        <div class="form-group">
-            <label for="total_miles">Total Route Distance (miles)</label>
-            <input type="number" id="total_miles" name="total_miles" step="0.1" min="1" value="{{ default_total_miles }}" required>
-        </div>
-
-        <div class="form-group">
-            <label for="seed_miles">Pre-App Miles (miles already walked before today)</label>
-            <input type="number" id="seed_miles" name="seed_miles" step="0.1" min="0" value="0" required>
-        </div>
-
-        <div class="form-group">
-            <h3 class="mb-1">Choose 6 Waypoints</h3>
-            <p class="text-muted mb-1">Select exactly 6 cities to track as milestones along your route.</p>
-
-            {% for wp in candidates %}
-            <label style="display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--color-border); cursor: pointer;">
-                <input type="checkbox" name="waypoints" value="{{ loop.index0 }}"
-                    {% if wp.selected %}checked{% endif %}>
-                <span style="flex: 1;">{{ wp.name }}</span>
-                <span class="text-muted" style="font-size: 0.85rem;">{{ wp.mile_marker }} mi</span>
-            </label>
-            {% endfor %}
-            <p id="wpCount" class="text-muted mt-1" style="font-size: 0.85rem;">0 of 6 selected</p>
-        </div>
-
-        <button type="submit" class="btn-full" id="submitBtn" disabled>Complete Setup</button>
+        <button type="submit" class="btn-full">Start Walking</button>
     </form>
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    const checkboxes = document.querySelectorAll('input[name="waypoints"]');
-    const counter = document.getElementById('wpCount');
-    const submitBtn = document.getElementById('submitBtn');
-
-    function updateCount() {
-        const count = document.querySelectorAll('input[name="waypoints"]:checked').length;
-        counter.textContent = count + ' of 6 selected';
-        submitBtn.disabled = count !== 6;
-    }
-
-    checkboxes.forEach(cb => cb.addEventListener('change', updateCount));
-    updateCount();
-</script>
 {% endblock %}
