@@ -24,9 +24,7 @@
             </div>
 
             <div class="progress-bar-container">
-                <div class="progress-bar" style="width: {{ [current.percent_complete, 100]|min }}%">
-                    {{ current.percent_complete }}%
-                </div>
+                <div class="progress-bar" style="width: {{ [current.percent_complete, 100]|min }}%"></div>
             </div>
 
             {% if status_message %}
@@ -127,9 +125,7 @@
             </div>
 
             <div class="progress-bar-container">
-                <div class="progress-bar" style="width: {{ [friend.percent_complete, 100]|min }}%">
-                    {{ friend.percent_complete }}%
-                </div>
+                <div class="progress-bar" style="width: {{ [friend.percent_complete, 100]|min }}%"></div>
             </div>
 
             <div id="map-friend" class="route-map"></div>

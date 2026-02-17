@@ -38,9 +38,7 @@
     </div>
 
     <div class="progress-bar-container">
-        <div class="progress-bar" style="width: {{ [walker.percent_complete, 100]|min }}%">
-            {{ walker.percent_complete }}%
-        </div>
+        <div class="progress-bar" style="width: {{ [walker.percent_complete, 100]|min }}%"></div>
     </div>
     {% else %}
     <p class="text-muted mb-2">Setup not complete.</p>
