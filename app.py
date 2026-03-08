@@ -30,34 +30,33 @@ def today_et() -> date:
 # In prod, these come from a maps API call. The UI pattern stays the same.
 
 WAYPOINT_CANDIDATES = {
-    "Columbus": {
-        "origin": "Columbus, OH",
-        "total_miles": 536.0,
+    "Sara": {
+        "origin": "Sara's Start (Columbus, OH)",
+        "total_miles": 540.0,
         "candidates": [
-            {"name": "Zanesville, OH", "mile_marker": 60},
-            {"name": "Wheeling, WV", "mile_marker": 130},
-            {"name": "Pittsburgh, PA", "mile_marker": 185},
-            {"name": "Altoona, PA", "mile_marker": 280},
-            {"name": "Harrisburg, PA", "mile_marker": 370},
-            {"name": "Reading, PA", "mile_marker": 420},
-            {"name": "Allentown, PA", "mile_marker": 450},
-            {"name": "Newark, NJ", "mile_marker": 510},
-            {"name": "New York City, NY", "mile_marker": 536},
+            {"name": "Zanesville, OH", "mile_marker": 65},
+            {"name": "Wheeling, WV", "mile_marker": 140},
+            {"name": "Pittsburgh, PA", "mile_marker": 195},
+            {"name": "Johnstown, PA", "mile_marker": 255},
+            {"name": "Altoona, PA", "mile_marker": 295},
+            {"name": "Harrisburg, PA", "mile_marker": 440},
+            {"name": "Philadelphia, PA", "mile_marker": 490},
+            {"name": "Newark, NJ", "mile_marker": 530},
+            {"name": "New York City, NY", "mile_marker": 540},
         ],
     },
-    "Asheville": {
-        "origin": "Asheville, NC",
-        "total_miles": 693.0,
+    "Mariah": {
+        "origin": "Mariah's Start (Scottville, NC)",
+        "total_miles": 540.0,
         "candidates": [
-            {"name": "Winston-Salem, NC", "mile_marker": 92},
-            {"name": "Roanoke, VA", "mile_marker": 202},
-            {"name": "Staunton, VA", "mile_marker": 266},
-            {"name": "Richmond, VA", "mile_marker": 381},
-            {"name": "Washington, DC", "mile_marker": 497},
-            {"name": "Baltimore, MD", "mile_marker": 543},
-            {"name": "Wilmington, DE", "mile_marker": 601},
-            {"name": "Philadelphia, PA", "mile_marker": 624},
-            {"name": "New York City, NY", "mile_marker": 693},
+            {"name": "Statesville, NC", "mile_marker": 80},
+            {"name": "Greensboro, NC", "mile_marker": 160},
+            {"name": "Roanoke, VA", "mile_marker": 265},
+            {"name": "Staunton, VA", "mile_marker": 325},
+            {"name": "Harrisburg, PA", "mile_marker": 440},
+            {"name": "Philadelphia, PA", "mile_marker": 490},
+            {"name": "Newark, NJ", "mile_marker": 530},
+            {"name": "New York City, NY", "mile_marker": 540},
         ],
     },
 }
@@ -66,9 +65,9 @@ WAYPOINT_CANDIDATES = {
 def _get_candidates_for_user(user: dict) -> tuple[str, float, list[dict]]:
     """Return (origin, total_miles, candidates) for a user based on name."""
     if user["name"] == "Sara":
-        data = WAYPOINT_CANDIDATES["Columbus"]
+        data = WAYPOINT_CANDIDATES["Sara"]
     else:
-        data = WAYPOINT_CANDIDATES["Asheville"]
+        data = WAYPOINT_CANDIDATES["Mariah"]
     candidates = [
         {**wp, "selected": False, "display_order": i + 1}
         for i, wp in enumerate(data["candidates"])

@@ -1,17 +1,23 @@
 Routes:
 
-Sara:
+Sara's Start:
 
-Depart: 1343 Bruck St., Columbus OH 43206
-
-
-
-Mariah:
-
-Depart: 205 Fayetteville St., Asheville, NC 28806
+Columbus, OH (Sara's Start)
+Route distance: 540 miles
 
 
+Mariah's Start:
 
-Destinatin for Both: 
+Scottville, NC (Mariah's Start)
+Route distance: 540 miles
 
-2 Pennsylvania Plaza, New York, NY 10121
+
+Destination for Both:
+
+2 Pennsylvania Plaza, New York, NY 10121 (Madison Square Garden)
+
+
+Notes:
+- Both routes are equalized at 540 miles
+- Routes converge at Harrisburg, PA (~mile 440)
+- Shared final leg: Harrisburg → Philadelphia → Newark → NYC (~100 miles)

@@ -1,7 +1,7 @@
 # Session Context
 
 ## Current Focus
-walk-to-nyc: Production refinements — timezone fix + route distance correction
+walk-to-nyc: UI finishing touches + production DB reset
 
 ## MCP Servers Added This Session
 | Server | Status |
@@ -19,7 +19,7 @@ walk-to-nyc: Production refinements — timezone fix + route distance correction
 8. Deploy to Fly.io instead of fighting localhost issues — CI/CD via GitHub Actions
 9. config.py guards `.env.local` with existence check (file absent in Docker)
 10. Leaflet + OpenStreetMap for route maps — no API key, ~18 hardcoded lat/lng waypoints per route
-11. Custom inline SVGs for walker avatars (Sara: blonde spiky, Mariah: brown chin-length)
+11. ~~Custom inline SVGs for walker avatars~~ → Removed in favor of clean text header
 12. All dates pinned to US Eastern (America/New_York) — `today_et()` helper, SQLite defaults use `-5 hours` offset, JS date picker uses `toLocaleString` with Eastern TZ
 13. Mariah's route distance corrected from 600 to 693 miles (Asheville NC → NYC); waypoint mile markers scaled proportionally
 
@@ -46,8 +46,9 @@ walk-to-nyc: Production refinements — timezone fix + route distance correction
 - **DB reset**: `fly ssh console -C "rm /data/walk.db && python init_db.py"`
 
 ## What's Next
-- **DB reset required** after deploy — Mariah's `route_total_miles` and waypoint `mile_marker` values in the DB still reflect the old 600-mile route. Run: `fly ssh console -C "rm /data/walk.db && python init_db.py"` then have both users re-setup.
-- Test Mariah's setup flow after DB reset to confirm 693 shows correctly
+- Production DB has been reset and re-seeded (2026-02-16). Fresh tokens issued.
+- Both users need to re-setup their routes via the setup flow.
+- Changes not yet committed/pushed — commit needed to trigger GitHub Actions deploy.
 - Consider DST-aware offset (currently hardcoded `-5 hours` in SQLite; Python side uses `zoneinfo` which handles DST automatically)
 
 ## Notes
@@ -59,4 +60,5 @@ walk-to-nyc: Production refinements — timezone fix + route distance correction
 - SQLite `datetime('now', '-5 hours')` is a fixed UTC-5 offset; does NOT auto-adjust for EDT (-4). The Python `today_et()` helper DOES handle DST correctly via `zoneinfo`.
 
 ## Session Status
-In progress
+Completed: 2026-02-16
+Servers cleaned: (none added)
